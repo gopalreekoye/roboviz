@@ -430,12 +430,13 @@ int main(int argc, char *argv[]) {
 	// ---------------------------------------
 	robogenMessage::Robot robotMessage;
 	std::string robotFileString(argv[1]);
-
+	unsigned int swarmSize = configuration->getSwarmSize();
+   
+    
 	if(!RobotRepresentation::createRobotMessageFromFile(robotMessage,
-			robotFileString)) {
+		robotFileString)) {
 		exitRobogen(EXIT_FAILURE);
-	}
-
+		}
 	// ---------------------------------------
 	// Setup environment
 	// ---------------------------------------

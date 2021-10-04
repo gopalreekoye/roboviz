@@ -67,7 +67,8 @@ public:
 			bool capAcceleration, float maxLinearAcceleration,
 			float maxAngularAcceleration, int maxDirectionShiftsPerSecond,
 			osg::Vec3 gravity, bool disallowObstacleCollisions,
-			unsigned int obstacleOverlapPolicy) :
+			unsigned int obstacleOverlapPolicy,
+			unsigned int swarmSize) :
 				scenario_(scenario), scenarioFile_(scenarioFile),
 				timeSteps_(timeSteps),
 				timeStepLength_(timeStepLength),
@@ -86,7 +87,8 @@ public:
 				maxDirectionShiftsPerSecond_(maxDirectionShiftsPerSecond),
 				gravity_(gravity),
 				disallowObstacleCollisions_(disallowObstacleCollisions),
-				obstacleOverlapPolicy_(obstacleOverlapPolicy) {
+				obstacleOverlapPolicy_(obstacleOverlapPolicy),
+				swarmSize_(swarmSize) {
 
 		simulationTime_ = timeSteps * timeStepLength;
 
@@ -262,6 +264,12 @@ public:
 	unsigned int getObstacleOverlapPolicy() {
 		return obstacleOverlapPolicy_;
 	}
+	/**
+	 * return swarm size of robots
+	 */
+	unsigned int getSwarmSize() {
+		return swarmSize_;
+	}
 
 	/**
 	 * Convert configuration into configuration message.
@@ -408,6 +416,11 @@ private:
 	 * initial AABB
 	 */
 	unsigned int obstacleOverlapPolicy_;
+	/**
+	 * size of swarm of robots
+	 * 
+	 */
+	unsigned int swarmSize_;
 };
 
 }

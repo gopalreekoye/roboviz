@@ -73,7 +73,7 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseConfigurationFile(
 			"Allowed options for Simulation Config File");
 	desc.add_options()
 			("swarmSize",boost::program_options::value<unsigned int>(),
-							"number of robots in the swam")
+							"number of robots in the swarm")
 			("gatheringZonePosition",boost::program_options::value<std::string>(),
 					" x,y,z (comma separated) gives center for gatheringzone.")
 			("gatheringZoneSize",boost::program_options::value<std::string>(),
@@ -514,6 +514,13 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseConfigurationFile(
 				"' given for 'obstacleOverlapPolicy'" << std::endl;
 		return boost::shared_ptr<RobogenConfig>();
 	}
+	if (!vm.count("swarmSize")) {
+		std::cerr << "Undefined 'swarmSize' parameter in '" << fileName << "'"
+				<< std::endl;
+		return boost::shared_ptr<RobogenConfig>();
+	}
+	unsigned int swarmSize = vm["swarmSize"].as<unsigned int>();
+	
 
 	return boost::shared_ptr<RobogenConfig>(
 			new RobogenConfig(scenario, scenarioFile, nTimeSteps,
@@ -524,7 +531,7 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseConfigurationFile(
 					motorNoiseLevel, capAcceleration, maxLinearAcceleration,
 					maxAngularAcceleration, maxDirectionShiftsPerSecond,
 					gravity, disallowObstacleCollisions,
-					obstacleOverlapPolicy));
+					obstacleOverlapPolicy,swarmSize));
 
 }
 
@@ -805,6 +812,7 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseRobogenMessage(
 	unsigned int timeSteps = simulatorConf.ntimesteps();
 	float timeStepLength = simulatorConf.timestep();
 	int actuationPeriod = simulatorConf.actuationperiod();
+	unsigned int swarmSize= 2;
 
 	return boost::shared_ptr<RobogenConfig>(
 			new RobogenConfig(scenario, "", timeSteps, timeStepLength,
@@ -821,7 +829,8 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseRobogenMessage(
 							  simulatorConf.gravityy(),
 							  simulatorConf.gravityz()),
 					simulatorConf.disallowobstaclecollisions(),
-					simulatorConf.obstacleoverlappolicy()
+					simulatorConf.obstacleoverlappolicy(),
+					swarmSize
 					));
 
 }
