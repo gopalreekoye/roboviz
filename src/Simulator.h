@@ -67,7 +67,7 @@ enum result{
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		boost::shared_ptr<RobogenConfig> configuration,
 		const std::vector<robogenMessage::Robot> &robotMessage, IViewer *viewer,
-		boost::random::mt19937 &rng);
+		boost::random::mt19937 &rng, unsigned int swarmSize);
 
 
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,

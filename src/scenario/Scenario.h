@@ -83,7 +83,7 @@ public:
 	/**
 	 * @return the robot
 	 */
-	boost::shared_ptr<Robot> getRobot();
+	boost::shared_ptr<Robot> getRobot(int id);
 
 	/**
 	 * @return the robogen configuration
@@ -151,9 +151,9 @@ public:
 private:
 
 	/**
-	 * Robot
+	 * Robots
 	 */
-	boost::shared_ptr<Robot> robot_;
+	std::vector<boost::shared_ptr<Robot>> robots_;
 
 	/**
 	 * Robogen config

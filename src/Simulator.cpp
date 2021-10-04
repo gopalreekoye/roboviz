@@ -45,10 +45,10 @@ namespace robogen{
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		boost::shared_ptr<RobogenConfig> configuration,
 		const std::vector<robogenMessage::Robot> &robotMessage,
-		IViewer *viewer, boost::random::mt19937 &rng) {
+		IViewer *viewer, boost::random::mt19937 &rng, unsigned int swarmSize) {
 	boost::shared_ptr<FileViewerLog> log;
 	return runSimulations(scenario, configuration,
-			robotMessage, viewer, rng, false, log);
+			robotMessage, viewer, rng, false, log, swarmSize);
 }
 
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
@@ -99,7 +99,7 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 
 		for(int i=0;i<swarmSize;i++){
 			boost::shared_ptr<Robot> robot(new Robot);
-			if (!robot->init(odeWorld, odeSpace, robotMessage)) {
+			if (!robot->init(odeWorld, odeSpace, robotMessage[i])) {
 				std::cout << "Problems decoding the robot. Quit."
 						<< std::endl;
 				return SIMULATION_FAILURE;
@@ -127,6 +127,12 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		}
 		std::cout << "total mass is " << totalMass * 1000. << "g" << std::endl;
 #endif
+
+		std::vector<std::vector<boost::shared_ptr<Sensor>>> listSensors;
+		std::vector<std::vector<boost::shared_ptr<TouchSensor>>> listTouchSensors;
+		std::vector<std::vector<boost::shared_ptr<Motor>>> listMotors;
+		std::vector<boost::shared_ptr<NeuralNetwork>> listNeuralNet;
+		std::vector<std::vector<boost::shared_ptr<Model>>> listBodyParts;
 
 		for(int s=0;s<swarmSize;s++){
 
@@ -173,6 +179,12 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 					vRobots[s]->getBrain();
 			std::vector<boost::shared_ptr<Model> > bodyParts =
 					vRobots[s]->getBodyParts();
+
+			listSensors.push_back(sensors);
+			listTouchSensors.push_back(touchSensors);
+			listMotors.push_back(motors);
+			listNeuralNet.push_back(neuralNetwork);
+			listBodyParts.push_back(bodyParts);
 		}
 			// Initialize scenario
 		if (!scenario->init(odeWorld, odeSpace, vRobots)) {
@@ -203,7 +215,7 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		}
 
 		bool visualize = (viewer != NULL);
-		if(visualize && !viewer->configureScene(bodyParts, scenario)) {
+		if(visualize && !viewer->configureScene(listBodyParts, scenario)) {
 			std::cout << "Cannot configure scene. Quit."
 					<< std::endl;
 			return SIMULATION_FAILURE;
@@ -266,39 +278,41 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 			}
 
 			if (configuration->isCapAlleration()) {
-				dBodyID rootBody =
-						robot->getCoreComponent()->getRoot()->getBody();
-				const dReal *angVel, *linVel;
+				for(int f=0;f<swarmSize;f++){
+					dBodyID rootBody =
+							vRobots[f]->getCoreComponent()->getRoot()->getBody();
+					const dReal *angVel, *linVel;
 
-				angVel = dBodyGetAngularVel(rootBody);
-				linVel = dBodyGetLinearVel(rootBody);
+					angVel = dBodyGetAngularVel(rootBody);
+					linVel = dBodyGetLinearVel(rootBody);
 
-				if(t > 0) {
-					// TODO make this use the step size and update default
-					// limits to account for this
-					double angAccel = dCalcPointsDistance3(
-							angVel, previousAngVel);
-					double linAccel = dCalcPointsDistance3(
-							linVel, previousLinVel);
+					if(t > 0) {
+						// TODO make this use the step size and update default
+						// limits to account for this
+						double angAccel = dCalcPointsDistance3(
+								angVel, previousAngVel);
+						double linAccel = dCalcPointsDistance3(
+								linVel, previousLinVel);
 
-					if(angAccel > configuration->getMaxAngularAcceleration() ||
-					   linAccel > configuration->getMaxLinearAcceleration()) {
+						if(angAccel > configuration->getMaxAngularAcceleration() ||
+						linAccel > configuration->getMaxLinearAcceleration()) {
 
-						printf("EVALUATION CANCELED: max accel");
-						printf(" exceeded at time %f.", t);
-						printf(" Angular accel: %f, Linear accel: %f.\n",
-								angAccel, linAccel);
-						printf("Will give %f fitness.\n", MIN_FITNESS);
-						constraintViolated = true;
-						break;
+							printf("EVALUATION CANCELED: max accel");
+							printf(" exceeded at time %f.", t);
+							printf(" Angular accel: %f, Linear accel: %f.\n",
+									angAccel, linAccel);
+							printf("Will give %f fitness.\n", MIN_FITNESS);
+							constraintViolated = true;
+							break;
+						}
+
 					}
 
-				}
-
-				// save current velocities as previous
-				for(unsigned int j=0; j<3; j++) {
-					previousAngVel[j] = angVel[j];
-					previousLinVel[j] = linVel[j];
+					// save current velocities as previous
+					for(unsigned int j=0; j<3; j++) {
+						previousAngVel[j] = angVel[j];
+						previousLinVel[j] = linVel[j];
+					}
 				}
 			}
 
@@ -309,98 +323,100 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 			// Elapsed time since last call
 			env->setTimeElapsed(step);
 
-			// Update Sensors
-			for (unsigned int i = 0; i < bodyParts.size();
-					++i) {
-				if (boost::dynamic_pointer_cast<
-						PerceptiveComponent>(bodyParts[i])) {
-					boost::dynamic_pointer_cast<
-							PerceptiveComponent>(bodyParts[i])->updateSensors(
-							env);
-				}
-			}
 
-			if(((count - 1) % configuration->getActuationPeriod()) == 0) {
-				// Feed neural network
-				for (unsigned int i = 0; i < sensors.size(); ++i) {
-					networkInput[i] = sensors[i]->read();
-
-					// Add sensor noise: Gaussian with std dev of
-					// sensorNoiseLevel * actualValue
-					if (configuration->getSensorNoiseLevel() > 0.0) {
-						networkInput[i] += (normalDistribution(rng) *
-								configuration->getSensorNoiseLevel() *
-								networkInput[i]);
-					}
-				}
-				if (log) {
-					log->logSensors(networkInput, sensors.size());
-				}
-
-
-				::feed(neuralNetwork.get(), &networkInput[0]);
-
-				// Step the neural network
-				::step(neuralNetwork.get(), t);
-
-				// Fetch the neural network ouputs
-				::fetch(neuralNetwork.get(), &networkOutputs[0]);
-
-				// Send control to motors
-				for (unsigned int i = 0; i < motors.size(); ++i) {
-
-					// Add motor noise:
-					// uniform in range +/- motorNoiseLevel * actualValue
-					if(configuration->getMotorNoiseLevel() > 0.0) {
-						networkOutputs[i] += (
-									((uniformDistribution(rng) *
-									2.0 *
-									configuration->getMotorNoiseLevel())
-									- configuration->getMotorNoiseLevel())
-									* networkOutputs[i]);
-					}
-
-
+			for(int l=0;l<swarmSize;l++){
+				// Update Sensors
+				for (unsigned int i = 0; i < listBodyParts[l].size();
+						++i) {
 					if (boost::dynamic_pointer_cast<
-							RotationMotor>(motors[i])) {
-						boost::dynamic_pointer_cast<RotationMotor>(motors[i]
-						   )->setDesiredVelocity(networkOutputs[i], step *
-								   	   	  configuration->getActuationPeriod());
-					} else if (boost::dynamic_pointer_cast<
-							ServoMotor>(motors[i])) {
-						boost::dynamic_pointer_cast<ServoMotor>(motors[i]
-						   )->setDesiredPosition(networkOutputs[i], step *
-								configuration->getActuationPeriod());
-						//motor->setPosition(networkOutputs[i], step *
-						//		configuration->getActuationPeriod());
+							PerceptiveComponent>(listBodyParts[l][i])) {
+						boost::dynamic_pointer_cast<
+								PerceptiveComponent>(listBodyParts[l][i])->updateSensors(
+								env);
+					}
+				}
+
+				if(((count - 1) % configuration->getActuationPeriod()) == 0) {
+					// Feed neural network
+					for (unsigned int i = 0; i < listSensors[l].size(); ++i) {
+						networkInput[i] = listSensors[l][i]->read();
+
+						// Add sensor noise: Gaussian with std dev of
+						// sensorNoiseLevel * actualValue
+						if (configuration->getSensorNoiseLevel() > 0.0) {
+							networkInput[i] += (normalDistribution(rng) *
+									configuration->getSensorNoiseLevel() *
+									networkInput[i]);
+						}
+					}
+					if (log) {
+						log->logSensors(networkInput, listSensors[l].size());
+					}
+
+
+					::feed(listNeuralNet[l].get(), &networkInput[0]);
+
+					// Step the neural network
+					::step(listNeuralNet[l].get(), t);
+
+					// Fetch the neural network ouputs
+					::fetch(listNeuralNet[l].get(), &networkOutputs[0]);
+
+					// Send control to motors
+					for (unsigned int i = 0; i < listMotors[l].size(); ++i) {
+
+						// Add motor noise:
+						// uniform in range +/- motorNoiseLevel * actualValue
+						if(configuration->getMotorNoiseLevel() > 0.0) {
+							networkOutputs[i] += (
+										((uniformDistribution(rng) *
+										2.0 *
+										configuration->getMotorNoiseLevel())
+										- configuration->getMotorNoiseLevel())
+										* networkOutputs[i]);
+						}
+
+
+						if (boost::dynamic_pointer_cast<
+								RotationMotor>(listMotors[l][i])) {
+							boost::dynamic_pointer_cast<RotationMotor>(listMotors[l][i]
+							)->setDesiredVelocity(networkOutputs[i], step *
+											configuration->getActuationPeriod());
+						} else if (boost::dynamic_pointer_cast<
+								ServoMotor>(listMotors[l][i])) {
+							boost::dynamic_pointer_cast<ServoMotor>(listMotors[l][i]
+							)->setDesiredPosition(networkOutputs[i], step *
+									configuration->getActuationPeriod());
+							//motor->setPosition(networkOutputs[i], step *
+							//		configuration->getActuationPeriod());
+						}
+
+					}
+
+					if(log) {
+						log->logMotors(networkOutputs, listMotors.size());
+					}
+				}
+
+				bool motorBurntOut = false;
+				for (unsigned int i = 0; i < listMotors[l].size(); ++i) {
+					listMotors[l][i]->step( step ) ; //* configuration->getActuationPeriod() );
+
+					// TODO find a cleaner way to do this
+					// for now will reuse accel cap infrastructure
+					if (listMotors[l][i]->isBurntOut()) {
+						std::cout << "Motor burnt out, will terminate now "
+								<< std::endl;
+						motorBurntOut = true;
+						//constraintViolated = true;
 					}
 
 				}
-
-				if(log) {
-					log->logMotors(networkOutputs, motors.size());
+			
+				if(constraintViolated || motorBurntOut) {
+					break;
 				}
 			}
-
-			bool motorBurntOut = false;
-			for (unsigned int i = 0; i < motors.size(); ++i) {
-				motors[i]->step( step ) ; //* configuration->getActuationPeriod() );
-
-				// TODO find a cleaner way to do this
-				// for now will reuse accel cap infrastructure
-				if (motors[i]->isBurntOut()) {
-					std::cout << "Motor burnt out, will terminate now "
-							<< std::endl;
-					motorBurntOut = true;
-					//constraintViolated = true;
-				}
-
-			}
-
-			if(constraintViolated || motorBurntOut) {
-				break;
-			}
-
 			if (!scenario->afterSimulationStep()) {
 				std::cout
 						<< "Cannot execute scenario after simulation step. Quit."
@@ -409,9 +425,10 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 			}
 
 			if(log) {
-				log->logPosition(
-					scenario->getRobot(
-							)->getCoreComponent()->getRootPosition());
+				for(int y=0;y<swarmSize;y++){
+					log->logPosition(
+						scenario->getRobot(y)->getCoreComponent()->getRootPosition());
+				}
 			}
 
 			if(webGLlogger) {

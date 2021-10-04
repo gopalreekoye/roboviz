@@ -57,40 +57,40 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 	}
 
 
-	robot_ = robot;
-
+	robots_ = robots;
+	unsigned int swarmSize= robogenConfig_->getSwarmSize();
 	// Setup robot position
-	double minX = 0;
-	double maxX = 0;
-	double minY = 0;
-	double maxY = 0;
-	double minZ = 0;
-	double maxZ = 0;
+	std::vector<double> minX(swarmSize, 0.0);
+	std::vector<double> maxX(swarmSize, 0.0);
+	std::vector<double> minY(swarmSize, 0.0);
+	std::vector<double> maxY(swarmSize, 0.0);
+	std::vector<double> minZ(swarmSize, 0.0);
+	std::vector<double> maxZ(swarmSize, 0.0);
+	
+	std::vector<osg::Vec2> startingPosition;
+
 
 	// Starting position and orientation
-	osg::Vec2 startingPosition =
-			robogenConfig_->getStartingPos()->getStartPosition(
-					startPositionId_)->getPosition();
-	float startingAzimuth = robogenConfig_->getStartingPos()->getStartPosition(
-			startPositionId_)->getAzimuth();
-	osg::Quat roboRot;
-	roboRot.makeRotate(osg::inDegrees(startingAzimuth), osg::Vec3(0,0,1));
+	for(int q=0;q<swarmSize;q++){
+		startingPosition[q] = robogenConfig_->getStartingPos()->getStartPosition(q)->getPosition();
+		float startingAzimuth = robogenConfig_->getStartingPos()->getStartPosition(q)->getAzimuth();
+		osg::Quat roboRot;
+		roboRot.makeRotate(osg::inDegrees(startingAzimuth), osg::Vec3(0,0,1));
+		robots[q]->rotateRobot(roboRot);
+		robots[q]->getBB(minX[q], maxX[q], minY[q], maxY[q], minZ[q], maxZ[q]);
+		robots[q]->translateRobot(
+				osg::Vec3(startingPosition[q].x(),
+						startingPosition[q].y(),
+						robogenConfig_->getTerrainConfig()->getHeight()
+							+ inMm(2) - minZ[q]));
+		robots[q]->getBB(minX[q], maxX[q], minY[q], maxY[q], minZ[q], maxZ[q]);
 
-	robot->rotateRobot(roboRot);
-	robot->getBB(minX, maxX, minY, maxY, minZ, maxZ);
-	robot->translateRobot(
-			osg::Vec3(startingPosition.x(),
-					startingPosition.y(),
-					robogenConfig_->getTerrainConfig()->getHeight()
-						+ inMm(2) - minZ));
-	robot->getBB(minX, maxX, minY, maxY, minZ, maxZ);
-
-	std::cout
-			<< "The robot is enclosed in the AABB(minX, maxX, minY, maxY, minZ, maxZ) ("
-			<< minX << ", " << maxX << ", " << minY << ", " << maxY << ", "
-			<< minZ << ", " << maxZ << ")" << std::endl;
-	std::cout << "Obstacles in this range will not be generated" << std::endl << std::endl;
-
+		std::cout
+				<< "The robot is enclosed in the AABB(minX, maxX, minY, maxY, minZ, maxZ) ("
+				<< minX[q] << ", " << maxX[q] << ", " << minY[q] << ", " << maxY[q] << ", "
+				<< minZ[q] << ", " << maxZ[q] << ")" << std::endl;
+		std::cout << "Obstacles in this range will not be generated" << std::endl << std::endl;
+	}
 	// Setup obstacles
 	boost::shared_ptr<ObstaclesConfig> obstacles =
 			robogenConfig_->getObstaclesConfig();
@@ -104,7 +104,7 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 
 	obstaclesRemoved_ = false;
 
-	double overlapMaxZ=minZ;
+	double overlapMaxZ= *std::min_element(minZ.begin(), minZ.end());
 
 	for (unsigned int i = 0; i < c.size(); ++i) {
 		boost::shared_ptr<BoxObstacle> obstacle(
@@ -124,26 +124,31 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 		 */
 
 		// Do not insert the obstacle if it is in the robot range
-		bool inRangeX = false;
-		if ((oMinX <= minX && oMaxX >= maxX) || (oMinX >= minX && oMinX <= maxX)
-				|| (oMaxX >= minX && oMaxX <= maxX)) {
-			inRangeX = true;
-		}
+		//check in each robot range
+		//if counter is greater than 0, 
+		
+		unsigned int counter=0;
 
-		bool inRangeY = false;
-		if ((oMinY <= minY && oMaxY >= maxY) || (oMinY >= minY && oMinY <= maxY)
-				|| (oMaxY >= minY && oMaxY <= maxY)) {
-			inRangeY = true;
-		}
+		for(int h=0;h<swarmSize;h++){
+			if ((oMinX <= minX[h] && oMaxX >= maxX[h]) || (oMinX >= minX[h] && oMinX <= maxX[h])
+					|| (oMaxX >= minX[h] && oMaxX <= maxX[h])) {
+				counter++;
+			}
 
-		bool inRangeZ = false;
-		if ((oMinZ <= minZ && oMaxZ >= maxZ) || (oMinZ >= minZ && oMinZ <= maxZ)
-				|| (oMaxZ >= minZ && oMaxZ <= maxZ)) {
-			inRangeZ = true;
-		}
+			
+			if ((oMinY <= minY[h] && oMaxY >= maxY[h]) || (oMinY >= minY[h] && oMinY <= maxY[h])
+					|| (oMaxY >= minY[h] && oMaxY <= maxY[h])) {
+				counter++;
+			}
 
+			
+			if ((oMinZ <= minZ[h] && oMaxZ >= maxZ[h]) || (oMinZ >= minZ[h] && oMinZ <= maxZ[h])
+					|| (oMaxZ >= minZ[h] && oMaxZ <= maxZ[h])) {
+				counter++;
+			}
+		}
 		// Do not insert obstacles in the robot range
-		if (!(inRangeX && inRangeY && inRangeZ)) {
+		if (counter==0) {
 			environment_->addObstacle(obstacle);
 		} else {
 			if (robogenConfig_->getObstacleOverlapPolicy() ==
@@ -163,11 +168,13 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 
 	if (robogenConfig_->getObstacleOverlapPolicy() ==
 			RobogenConfig::ELEVATE_ROBOT) {
-
-		robot->translateRobot(
-				osg::Vec3(startingPosition.x(), startingPosition.y(),
-						overlapMaxZ + inMm(2) - minZ));
+		for(int g=0;g<swarmSize;g++){
+			robots[g]->translateRobot(
+					osg::Vec3(startingPosition[g].x(), startingPosition[g].y(),
+							overlapMaxZ + inMm(2) - minZ[g]));
+		}
 	}
+
 
 	// Setup light sources
 	boost::shared_ptr<LightSourcesConfig> lightSourcesConfig =
@@ -192,8 +199,9 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 
 
 	// optimize the physics!  replace all fixed joints with composite bodies
-	robot->optimizePhysics();
-
+	for(int e=0;e<swarmSize;e++){
+		robots[e]->optimizePhysics();
+	}
 	return true;
 }
 
@@ -204,11 +212,14 @@ boost::shared_ptr<StartPosition> Scenario::getCurrentStartPosition() {
 
 void Scenario::prune(){
 	environment_.reset();
-	robot_.reset();
+	unsigned int s=robogenConfig_->getSwarmSize();
+	for(int k=0;k<s;k++){
+		robots_[k].reset();
+	}
 }
 
-boost::shared_ptr<Robot> Scenario::getRobot() {
-	return robot_;
+boost::shared_ptr<Robot> Scenario::getRobot(int id) {
+	return robots_[id];
 }
 
 boost::shared_ptr<RobogenConfig> Scenario::getRobogenConfig() {

@@ -40,11 +40,20 @@ class IViewer {
 
 public:
 	virtual ~IViewer() {};
-	virtual bool configureScene(std::vector<boost::shared_ptr<Model> > bodyParts,
+	virtual bool configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> listBodyParts,
 			boost::shared_ptr<Scenario> scenario) = 0;
 	virtual bool done() = 0;
 
-	/***	 * frame:  updates frame if it should be updated	 * params:	 * 		simulatedTime: the amount of time simulated so far (in seconds)	 * 		numTimeSteps: the number of time steps simulated so far	 * returns:	 * 		false if paused or going to fast	 * 			(so simulator should continue without stepping physics)	 * 		true otherwise	 */
+	/***
+	 * frame:  updates frame if it should be updated
+	 * params:
+	 * 		simulatedTime: the amount of time simulated so far (in seconds)
+	 * 		numTimeSteps: the number of time steps simulated so far
+	 * returns:
+	 * 		false if paused or going to fast
+	 * 			(so simulator should continue without stepping physics)
+	 * 		true otherwise
+	 */
 
 	virtual bool frame(double simulatedTime, unsigned int numTimeSteps) = 0;
 

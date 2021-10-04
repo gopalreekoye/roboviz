@@ -51,12 +51,12 @@ bool ChasingScenario::setupSimulation() {
 
 }
 
-bool Chasing(dWorldID odeWorld, dSpaceID odeSpace, boost::shared_ptr<Robot> robot) {
+bool Chasing(dWorldID odeWorld, dSpaceID odeSpace, std::vector<boost::shared_ptr<Robot>> robots) {
 
-	(odeWorld, odeSpace, robot);
+	(odeWorld, odeSpace, robots);
+	
 
-
-	if(this->getEnvironment()->getLightSources().size() == 0) {
+	if(this->getEnvironment()->getLightSources().size()== 0) {
 		std::cerr << "At least 1 light source is required for the "
 				<< "chasing scenario." << std::endl;
 		return false;
@@ -70,7 +70,7 @@ bool Chasing(dWorldID odeWorld, dSpaceID odeSpace, boost::shared_ptr<Robot> robo
 bool ChasingScenario::afterSimulationStep() {
 
 	// Compute distance from light source
-	osg::Vec3 curPos = this->getRobot()->getCoreComponent()->getRootPosition();
+	osg::Vec3 curPos = this->getRobot(0)->getCoreComponent()->getRootPosition();
 	osg::Vec3 lightSourcePos = this->getEnvironment()->getLightSources()[0]->getPosition();
 
 	osg::Vec3 temp = curPos - lightSourcePos;

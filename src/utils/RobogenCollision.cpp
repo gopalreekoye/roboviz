@@ -49,14 +49,16 @@ CollisionData::CollisionData(boost::shared_ptr<Scenario> scenario) :
 		scenario_(scenario), hasObstacleCollisions_(false) {
 
 	//numCulled = 0;
+	unsigned int swarmSize=scenario->getRobogenConfig()->getSwarmSize();
+	for(int w=0;w<swarmSize;w++){
+		for (size_t i=0; i<scenario->getRobot(w)->getBodyParts().size(); ++i) {
+			boost::shared_ptr<Model> model =
+					scenario->getRobot(w)->getBodyParts()[i];
+			for(size_t j=0; j<model->getBodies().size(); ++j) {
+				geomModelMap_[model->getBodies()[j]->getGeom()] = model;
+			}
 
-	for (size_t i=0; i<scenario->getRobot()->getBodyParts().size(); ++i) {
-		boost::shared_ptr<Model> model =
-				scenario->getRobot()->getBodyParts()[i];
-		for(size_t j=0; j<model->getBodies().size(); ++j) {
-			geomModelMap_[model->getBodies()[j]->getGeom()] = model;
 		}
-
 	}
 }
 
