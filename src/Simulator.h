@@ -66,15 +66,15 @@ enum result{
  */
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		boost::shared_ptr<RobogenConfig> configuration,
-		const robogenMessage::Robot &robotMessage, IViewer *viewer,
+		const std::vector<robogenMessage::Robot> &robotMessage, IViewer *viewer,
 		boost::random::mt19937 &rng);
 
 
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		boost::shared_ptr<RobogenConfig> configuration,
-		const robogenMessage::Robot &robotMessage, IViewer *viewer,
+		const std::vector<robogenMessage::Robot> &robotMessage, IViewer *viewer,
 		boost::random::mt19937 &rng,
-		bool onlyOnce, boost::shared_ptr<FileViewerLog> log);
+		bool onlyOnce, boost::shared_ptr<FileViewerLog> log, unsigned int swarmSize);
 
 
 

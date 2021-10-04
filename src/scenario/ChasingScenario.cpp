@@ -51,9 +51,9 @@ bool ChasingScenario::setupSimulation() {
 
 }
 
-bool ChasingScenario::init(dWorldID odeWorld, dSpaceID odeSpace, boost::shared_ptr<Robot> robot) {
+bool Chasing(dWorldID odeWorld, dSpaceID odeSpace, boost::shared_ptr<Robot> robot) {
 
-	Scenario::init(odeWorld, odeSpace, robot);
+	(odeWorld, odeSpace, robot);
 
 
 	if(this->getEnvironment()->getLightSources().size() == 0) {

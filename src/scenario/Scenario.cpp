@@ -47,7 +47,7 @@ Scenario::~Scenario() {
 }
 
 bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
-		boost::shared_ptr<Robot> robot) {
+		std::vector<boost::shared_ptr<Robot>> robots) {
 
 	environment_ = boost::shared_ptr<Environment>(new
 			Environment(odeWorld, odeSpace, robogenConfig_));

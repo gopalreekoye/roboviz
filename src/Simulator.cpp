@@ -44,7 +44,7 @@ namespace robogen{
 
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		boost::shared_ptr<RobogenConfig> configuration,
-		const robogenMessage::Robot &robotMessage,
+		const std::vector<robogenMessage::Robot> &robotMessage,
 		IViewer *viewer, boost::random::mt19937 &rng) {
 	boost::shared_ptr<FileViewerLog> log;
 	return runSimulations(scenario, configuration,
@@ -53,9 +53,9 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 
 unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		boost::shared_ptr<RobogenConfig> configuration,
-		const robogenMessage::Robot &robotMessage, IViewer *viewer,
+		const std::vector<robogenMessage::Robot> &robotMessage, IViewer *viewer,
 		boost::random::mt19937 &rng,
-		bool onlyOnce, boost::shared_ptr<FileViewerLog> log) {
+		bool onlyOnce, boost::shared_ptr<FileViewerLog> log, unsigned int swarmSize) {
 
 	bool constraintViolated = false;
 
@@ -92,83 +92,90 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 		{
 
 		// ---------------------------------------
-		// Generate Robot
+		// Generate Robots
 		// ---------------------------------------
-		boost::shared_ptr<Robot> robot(new Robot);
-		if (!robot->init(odeWorld, odeSpace, robotMessage)) {
-			std::cout << "Problems decoding the robot. Quit."
-					<< std::endl;
-			return SIMULATION_FAILURE;
-		}
+		//vector of robots to contain all robots
+		std::vector<boost::shared_ptr<Robot>> vRobots;
 
+		for(int i=0;i<swarmSize;i++){
+			boost::shared_ptr<Robot> robot(new Robot);
+			if (!robot->init(odeWorld, odeSpace, robotMessage)) {
+				std::cout << "Problems decoding the robot. Quit."
+						<< std::endl;
+				return SIMULATION_FAILURE;
+			}
+			vRobots.push_back(robot);
+		}
+	
 #ifdef DEBUG_MASSES
 		float totalMass = 0;
-		for (unsigned int i = 0; i < robot->getBodyParts().size(); ++i) {
-			float partMass = 0;
-			for (unsigned int j = 0;
-					j < robot->getBodyParts()[i]->getBodies().size(); ++j) {
+		for(int m=0;m<swarmSize;m++){
+			for (unsigned int i = 0; i < vRobots[m]->getBodyParts().size(); ++i) {
+				float partMass = 0;
+				for (unsigned int j = 0;
+						j < vRobots[m]->getBodyParts()[i]->getBodies().size(); ++j) {
 
-				dMass mass;
-				dBodyGetMass(robot->getBodyParts()[i]->getBodies()[j], &mass);
-				partMass += mass.mass;
+					dMass mass;
+					dBodyGetMass(vRobots[m]->getBodyParts()[i]->getBodies()[j], &mass);
+					partMass += mass.mass;
 
+				}
+				std::cout << vRobots[m]->getBodyParts()[i]->getId() <<  " has mass: "
+						<< partMass * 1000. << "g" << std::endl;
+				totalMass += partMass;
 			}
-			std::cout << robot->getBodyParts()[i]->getId() <<  " has mass: "
-					<< partMass * 1000. << "g" << std::endl;
-			totalMass += partMass;
 		}
-
 		std::cout << "total mass is " << totalMass * 1000. << "g" << std::endl;
 #endif
 
+		for(int s=0;s<swarmSize;s++){
 
-
-		if (log) {
-			if (!log->init(robot, configuration)) {
-				std::cout << "Problem initializing log!" << std::endl;
-				return SIMULATION_FAILURE;
+			if (log) {
+				if (!log->init(vRobots[s], configuration)) {
+					std::cout << "Problem initializing log!" << std::endl;
+					return SIMULATION_FAILURE;
+				}
 			}
-		}
 
 
 
 
-		std::cout << "Evaluating individual " << robot->getId()
-				<< ", trial: " << scenario->getCurTrial()
-				<< std::endl;
+			std::cout << "Evaluating individual " << vRobots[s]->getId()
+					<< ", trial: " << scenario->getCurTrial()
+					<< std::endl;
 
-		// Register sensors
-		std::vector<boost::shared_ptr<Sensor> > sensors =
-				robot->getSensors();
-		std::vector<boost::shared_ptr<TouchSensor> > touchSensors;
-		for (unsigned int i = 0; i < sensors.size(); ++i) {
-			if (boost::dynamic_pointer_cast<TouchSensor>(
-					sensors[i])) {
-				touchSensors.push_back(
-						boost::dynamic_pointer_cast<TouchSensor>(
-								sensors[i]));
+			// Register sensors
+			std::vector<boost::shared_ptr<Sensor> > sensors =
+					vRobots[s]->getSensors();
+			std::vector<boost::shared_ptr<TouchSensor> > touchSensors;
+			for (unsigned int i = 0; i < sensors.size(); ++i) {
+				if (boost::dynamic_pointer_cast<TouchSensor>(
+						sensors[i])) {
+					touchSensors.push_back(
+							boost::dynamic_pointer_cast<TouchSensor>(
+									sensors[i]));
+				}
 			}
+
+			// Register robot motors
+			std::vector<boost::shared_ptr<Motor> > motors =
+					vRobots[s]->getMotors();
+
+			// set cap for checking motor burnout
+			for(unsigned int i=0; i< motors.size(); i++) {
+				motors[i]->setMaxDirectionShiftsPerSecond(
+							configuration->getMaxDirectionShiftsPerSecond());
+
+			}
+
+			// Register brain and body parts
+			boost::shared_ptr<NeuralNetwork> neuralNetwork =
+					vRobots[s]->getBrain();
+			std::vector<boost::shared_ptr<Model> > bodyParts =
+					vRobots[s]->getBodyParts();
 		}
-
-		// Register robot motors
-		std::vector<boost::shared_ptr<Motor> > motors =
-				robot->getMotors();
-
-		// set cap for checking motor burnout
-		for(unsigned int i=0; i< motors.size(); i++) {
-			motors[i]->setMaxDirectionShiftsPerSecond(
-						configuration->getMaxDirectionShiftsPerSecond());
-
-		}
-
-		// Register brain and body parts
-		boost::shared_ptr<NeuralNetwork> neuralNetwork =
-				robot->getBrain();
-		std::vector<boost::shared_ptr<Model> > bodyParts =
-				robot->getBodyParts();
-
-		// Initialize scenario
-		if (!scenario->init(odeWorld, odeSpace, robot)) {
+			// Initialize scenario
+		if (!scenario->init(odeWorld, odeSpace, vRobots)) {
 			std::cout << "Cannot initialize scenario. Quit."
 					<< std::endl;
 			return SIMULATION_FAILURE;
@@ -183,7 +190,7 @@ unsigned int runSimulations(boost::shared_ptr<Scenario> scenario,
 			constraintViolated = true;
 			break;
 		}
-
+			
 
 		// Setup environment
 		boost::shared_ptr<Environment> env =

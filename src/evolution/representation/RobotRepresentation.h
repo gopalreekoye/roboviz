@@ -224,7 +224,7 @@ public:
 	 * Static method to populate a robot message with a representation loaded
 	 * from a file
 	 *
-	 * @param robotMessage robotMessage to populate
+	 * @param robotMessageList robotMessage to populate
 	 * @param robotFileString location of file to load
 	 * @return true if the operation completed successfully, false otherwise
 	 */

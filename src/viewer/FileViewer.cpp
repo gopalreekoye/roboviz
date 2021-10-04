@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
 
 	// Decode configuration file
 	boost::shared_ptr<RobogenConfig> configuration =
-			ConfigurationReader::parseConfigurationFile(std::string(argv[2]));
+			ConfigurationReader::parseConfigurationFile(std::string(argv[3]));
 	if (configuration == NULL) {
 		std::cerr << "Problems parsing the configuration file. Quit."
 				<< std::endl;
@@ -286,20 +286,20 @@ int main(int argc, char *argv[]) {
 	bool writeWebGL = false;
 	bool overwrite = false;
 
-	int currentArg = 3;
-	if (argc >= 4 && !boost::starts_with(argv[3], "--")) {
-		std::stringstream ss(argv[3]);
+	int currentArg = 4;
+	if (argc >= 5 && !boost::starts_with(argv[4], "--")) {
+		std::stringstream ss(argv[4]);
 		currentArg++;
 		ss >> desiredStart;
 		--desiredStart; // -- accounts for parameter being 1..n
 		if (ss.fail()) {
-			std::cerr << "Specified desired starting position \"" << argv[3]
+			std::cerr << "Specified desired starting position \"" << argv[4]
 					<< "\" is not an integer. Aborting..." << std::endl;
 			exitRobogen(EXIT_FAILURE);
 		}
 		if (desiredStart
 				>= configuration->getStartingPos()->getStartPosition().size()) {
-			std::cout << "Specified desired starting position " << argv[3]
+			std::cout << "Specified desired starting position " << argv[4]
 					<< " does not index a starting position. Aborting..."
 					<< std::endl;
 			exitRobogen(EXIT_FAILURE);
@@ -428,15 +428,21 @@ int main(int argc, char *argv[]) {
 	// ---------------------------------------
 	// Robot decoding
 	// ---------------------------------------
-	robogenMessage::Robot robotMessage;
-	std::string robotFileString(argv[1]);
 	unsigned int swarmSize = configuration->getSwarmSize();
-   
-    
-	if(!RobotRepresentation::createRobotMessageFromFile(robotMessage,
+	std::vector<robogenMessage::Robot> robotMessage;
+	for(int i=1;i<=swarmSize;i++){
+		std::string robotFileString(argv[i]);
+		
+		if(!RobotRepresentation::createRobotMessageFromFile(robotMessage[i-1],
 		robotFileString)) {
 		exitRobogen(EXIT_FAILURE);
 		}
+	}
+	
+	
+	
+   
+    
 	// ---------------------------------------
 	// Setup environment
 	// ---------------------------------------
@@ -476,7 +482,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	unsigned int simulationResult = runSimulations(scenario, configuration,
-			robotMessage, viewer, rng, true, log);
+			robotMessage, viewer, rng, true, log, swarmSize);
 
 	if (viewer != NULL) {
 		delete viewer;
