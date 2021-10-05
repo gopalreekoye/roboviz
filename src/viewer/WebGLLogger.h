@@ -78,7 +78,7 @@ public:
 private:
 	double frameRate;
 	double lastFrame;
-	boost::shared_ptr<Robot> robot;
+	std::vector<boost::shared_ptr<Robot>> robots;
 	boost::shared_ptr<Scenario> scenario;
 	std::string fileName;
 	json_t *jsonMap;

@@ -62,7 +62,7 @@ public:
 			bool recording,
 			unsigned int recordFrequency, std::string recordDirectoryName);
 	~Viewer();
-	bool configureScene(std::vector<boost::shared_ptr<Model> > bodyParts,
+	bool configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> bodyParts,
 			boost::shared_ptr<Scenario> scenario);
 	bool done();
 

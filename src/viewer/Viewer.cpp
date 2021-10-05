@@ -148,32 +148,33 @@ Viewer::~Viewer() {
 	delete this->viewer;
 }
 
-bool Viewer::configureScene(std::vector<boost::shared_ptr<Model> > bodyParts,
+bool Viewer::configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> bodyParts,
 		boost::shared_ptr<Scenario> scenario) {
+	unsigned int swarmSize=scenario->getRobogenConfig()->getSwarmSize();
+	for(int y=0;y<swarmSize;y++){
+		for (unsigned int i = 0; i < bodyParts[y].size(); ++i) {
+			boost::shared_ptr<RenderModel> renderModel =
+					RobogenUtils::createRenderModel(bodyParts[y][i]);
+			if (!renderModel) {
+				std::cout
+				<< "Cannot create a render model for model "
+				<< i << std::endl;
+				return false;
+			}
 
+			renderModel->setDebugActive(this->debugActive);
 
-	for (unsigned int i = 0; i < bodyParts.size(); ++i) {
-		boost::shared_ptr<RenderModel> renderModel =
-				RobogenUtils::createRenderModel(bodyParts[i]);
-		if (!renderModel) {
-			std::cout
-			<< "Cannot create a render model for model "
-			<< i << std::endl;
-			return false;
+			if (!renderModel->initRenderModel()) {
+				std::cout
+				<< "Cannot initialize a render model for one of the components. "
+				<< std::endl
+				<< "Please check that the models/ folder is in the same folder of this executable."
+				<< std::endl;
+				return false;
+			}
+			renderModels.push_back(renderModel);
+			this->root->addChild(renderModels[i]->getRootNode());
 		}
-
-		renderModel->setDebugActive(this->debugActive);
-
-		if (!renderModel->initRenderModel()) {
-			std::cout
-			<< "Cannot initialize a render model for one of the components. "
-			<< std::endl
-			<< "Please check that the models/ folder is in the same folder of this executable."
-			<< std::endl;
-			return false;
-		}
-		renderModels.push_back(renderModel);
-		this->root->addChild(renderModels[i]->getRootNode());
 	}
 
 	// Terrain render model

@@ -476,9 +476,7 @@ int main(int argc, char *argv[]) {
 	// ---------------------------------------
 	IViewer *viewer = NULL;
 	if (visualize) {
-		viewer = new Viewer(startPaused, debug,
-				speed, recording, recordFrequency,
-				recordDirectoryName);
+		viewer = new Viewer(startPaused, debug, speed, recording, recordFrequency, recordDirectoryName);
 	}
 
 	unsigned int simulationResult = runSimulations(scenario, configuration,

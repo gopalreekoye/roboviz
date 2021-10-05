@@ -86,6 +86,12 @@ public:
 	boost::shared_ptr<Robot> getRobot(int id);
 
 	/**
+	 * @return the vector of robots
+	 * 
+	 */
+	std::vector<boost::shared_ptr<Robot>> getRobots();
+
+	/**
 	 * @return the robogen configuration
 	 */
 	boost::shared_ptr<RobogenConfig> getRobogenConfig();

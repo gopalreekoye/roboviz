@@ -226,6 +226,10 @@ boost::shared_ptr<RobogenConfig> Scenario::getRobogenConfig() {
 	return robogenConfig_;
 }
 
+std::vector<boost::shared_ptr<Robot>> Scenario::getRobots(){
+	return robots_;
+}
+
 void Scenario::setStartingPosition(int id) {
 	startPositionId_ = id;
 }

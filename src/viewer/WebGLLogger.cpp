@@ -65,8 +65,8 @@ const char *WebGLLogger::LIGHT_TAGS = "lights";
 
 WebGLLogger::WebGLLogger(std::string inFileName,
 		boost::shared_ptr<Scenario> in_scenario, double targetFrameRate) :
-		frameRate(targetFrameRate), lastFrame(-1000.0), robot(
-				in_scenario->getRobot()), scenario(in_scenario), fileName(
+		frameRate(targetFrameRate), lastFrame(-1000.0), robots(
+				in_scenario->getRobots()), scenario(in_scenario), fileName(
 				inFileName) {
 	this->jsonRoot = json_object();
 	this->jsonStructure = json_array();
@@ -121,52 +121,55 @@ void WebGLLogger::writeObstaclesDefinition() {
 }
 
 void WebGLLogger::generateBodyCollection() {
-	for (size_t i = 0; i < this->robot->getBodyParts().size(); ++i) {
-		boost::shared_ptr<Model> currentModel = this->robot->getBodyParts()[i];
-		boost::shared_ptr<ParametricBrickModel> brickModel =
-				boost::dynamic_pointer_cast<ParametricBrickModel>(currentModel);
-		std::vector<int> ids = currentModel->getIDs();
-		for (std::vector<int>::iterator it = ids.begin(); it != ids.end();
-				++it) {
-			std::string meshName;
-			if (brickModel != 0) {
-				switch (*it) {
-				case ParametricBrickModel::B_CONNECTION_PART_ID:
-					meshName = WebGLLogger::getFormatedStringForCuboid(
-							brickModel->getConnectionLength(),
-							ParametricBrickModel::CONNECTION_PART_WIDTH,
-							ParametricBrickModel::CONNECTION_PART_THICKNESS);
-					break;
-				case ParametricBrickModel::B_CYLINDER_ID:
-					meshName = WebGLLogger::getFormatedStringForCylinder(
-							ParametricBrickModel::CYLINDER_RADIUS,
-							ParametricBrickModel::CONNECTION_PART_WIDTH);
-					break;
-				case ParametricBrickModel::B_FIXED_BAR__ID:
-					meshName = WebGLLogger::getFormatedStringForCuboid(
-							ParametricBrickModel::FIXED_BAR_LENGTH,
-							ParametricBrickModel::CONNECTION_PART_WIDTH,
-							ParametricBrickModel::CONNECTION_PART_THICKNESS);
-					break;
-				case ParametricBrickModel::B_SLOT_A_ID:
-				case ParametricBrickModel::B_SLOT_B_ID:
-					meshName = WebGLLogger::getFormatedStringForCuboid(
-							ParametricBrickModel::SLOT_THICKNESS,
-							ParametricBrickModel::SLOT_WIDTH,
-							ParametricBrickModel::SLOT_WIDTH);
-					break;
-				default:
-					meshName = "";
+	unsigned int swarmSize= this->scenario->getRobogenConfig()->getSwarmSize();
+	for(int r=0;r<swarmSize;r++){
+		for (size_t i = 0; i < this->robots[r]->getBodyParts().size(); ++i) {
+			boost::shared_ptr<Model> currentModel = this->robots[r]->getBodyParts()[i];
+			boost::shared_ptr<ParametricBrickModel> brickModel =
+					boost::dynamic_pointer_cast<ParametricBrickModel>(currentModel);
+			std::vector<int> ids = currentModel->getIDs();
+			for (std::vector<int>::iterator it = ids.begin(); it != ids.end();
+					++it) {
+				std::string meshName;
+				if (brickModel != 0) {
+					switch (*it) {
+					case ParametricBrickModel::B_CONNECTION_PART_ID:
+						meshName = WebGLLogger::getFormatedStringForCuboid(
+								brickModel->getConnectionLength(),
+								ParametricBrickModel::CONNECTION_PART_WIDTH,
+								ParametricBrickModel::CONNECTION_PART_THICKNESS);
+						break;
+					case ParametricBrickModel::B_CYLINDER_ID:
+						meshName = WebGLLogger::getFormatedStringForCylinder(
+								ParametricBrickModel::CYLINDER_RADIUS,
+								ParametricBrickModel::CONNECTION_PART_WIDTH);
+						break;
+					case ParametricBrickModel::B_FIXED_BAR__ID:
+						meshName = WebGLLogger::getFormatedStringForCuboid(
+								ParametricBrickModel::FIXED_BAR_LENGTH,
+								ParametricBrickModel::CONNECTION_PART_WIDTH,
+								ParametricBrickModel::CONNECTION_PART_THICKNESS);
+						break;
+					case ParametricBrickModel::B_SLOT_A_ID:
+					case ParametricBrickModel::B_SLOT_B_ID:
+						meshName = WebGLLogger::getFormatedStringForCuboid(
+								ParametricBrickModel::SLOT_THICKNESS,
+								ParametricBrickModel::SLOT_WIDTH,
+								ParametricBrickModel::SLOT_WIDTH);
+						break;
+					default:
+						meshName = "";
+					}
+				} else {
+					meshName = RobogenUtils::getMeshFile(currentModel, *it);
 				}
-			} else {
-				meshName = RobogenUtils::getMeshFile(currentModel, *it);
-			}
-			if (meshName.length() > 0) {
-				struct BodyDescriptor desc;
-				desc.meshName = meshName;
-				desc.model = currentModel;
-				desc.bodyId = *it;
-				this->bodies.push_back(desc);
+				if (meshName.length() > 0) {
+					struct BodyDescriptor desc;
+					desc.meshName = meshName;
+					desc.model = currentModel;
+					desc.bodyId = *it;
+					this->bodies.push_back(desc);
+				}
 			}
 		}
 	}
