@@ -82,13 +82,14 @@ protected:
 
 void Viewer::init(bool startPaused, bool debugActive, double speedFactor,
 		bool recording, unsigned int recordFrequency,
-		std::string recordDirectoryName) {
+		std::string recordDirectoryName, unsigned int swarmSize) {
 
 	// ---------------------------------------
 	// OSG Initialization
 	// ---------------------------------------
 
 	//Creating the viewer
+	this->swarmSize=swarmSize;
 	this->viewer = new osgViewer::Viewer();
 	this->viewer->setUpViewInWindow(200, 200, 800, 600);
 	this->keyboardEvent = osg::ref_ptr<KeyboardHandler>(
@@ -124,22 +125,22 @@ void Viewer::init(bool startPaused, bool debugActive, double speedFactor,
 }
 
 Viewer::Viewer(bool startPaused) {
-	this->init(startPaused, false, 1.0, false, 0, "");
+	this->init(startPaused, false, 1.0, false, 0, "", 1);
 }
 
 Viewer::Viewer(bool startPaused, bool debugActive) {
-	this->init(startPaused, debugActive, 1.0, false, 0, "");
+	this->init(startPaused, debugActive, 1.0, false, 0, "", 1);
 }
 
 Viewer::Viewer(bool startPaused, bool debugActive, double speedFactor) {
-	this->init(startPaused, debugActive, speedFactor, false, 0, "");
+	this->init(startPaused, debugActive, speedFactor, false, 0, "", 1);
 }
 
 Viewer::Viewer(bool startPaused, bool debugActive, double speedFactor,
 		bool recording, unsigned int recordFrequency,
-		std::string recordDirectoryName) {
+		std::string recordDirectoryName, unsigned int swarmSize) {
 	this->init(startPaused, debugActive, speedFactor,
-			recording, recordFrequency, recordDirectoryName);
+			recording, recordFrequency, recordDirectoryName, swarmSize);
 
 
 }
@@ -151,6 +152,7 @@ Viewer::~Viewer() {
 bool Viewer::configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> bodyParts,
 		boost::shared_ptr<Scenario> scenario) {
 	unsigned int swarmSize=scenario->getRobogenConfig()->getSwarmSize();
+	std::vector<std::vector<boost::shared_ptr<RenderModel>>> fakeRenderModels(swarmSize);
 	for(int y=0;y<swarmSize;y++){
 		for (unsigned int i = 0; i < bodyParts[y].size(); ++i) {
 			boost::shared_ptr<RenderModel> renderModel =
@@ -172,15 +174,19 @@ bool Viewer::configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> b
 				<< std::endl;
 				return false;
 			}
-			renderModels.push_back(renderModel);
-			this->root->addChild(renderModels[i]->getRootNode());
+			fakeRenderModels[y].push_back(renderModel);
+			this->root->addChild(fakeRenderModels[y][i]->getRootNode());
 		}
 	}
+	renderModels=fakeRenderModels;
+	std::cout << "Body parts rendering done"<<std::endl;
 
 	// Terrain render model
 	boost::shared_ptr<TerrainRender> terrainRender(
 			new TerrainRender(scenario->getEnvironment()->getTerrain()));
 	this->root->addChild(terrainRender->getRootNode());
+
+	std::cout << "Terrain rendering done"<<std::endl;
 
 	// Obstacles render model
 	const std::vector<boost::shared_ptr<Obstacle> >& obstacles =
@@ -201,6 +207,7 @@ bool Viewer::configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> b
 		this->root->addChild(obstacleRender->getRootNode());
 	}
 
+	std::cout << "Obstacles rendering done"<<std::endl;
 
 	for(unsigned int i = 0;
 			i < scenario->getEnvironment()->getLightSources().size(); i++) {
@@ -265,10 +272,13 @@ bool Viewer::frame(double simulatedTime, unsigned int numTimeSteps) {
 	}
 
 	if(this->debugActive) {
-		for(unsigned int i=0; i<renderModels.size(); i++) {
-			renderModels[i]->togglePrimitives(keyboardEvent->showGeoms());
-			renderModels[i]->toggleMeshes(keyboardEvent->showMeshes());
-			//renderModels[i]->toggleTransparency(keyboardEvent->isTransparent());
+		unsigned int sS=this->swarmSize;
+		for(int u=0;u<sS;u++){
+			for(unsigned int i=0; i<renderModels[u].size(); i++) {
+				renderModels[u][i]->togglePrimitives(keyboardEvent->showGeoms());
+				renderModels[u][i]->toggleMeshes(keyboardEvent->showMeshes());
+				//renderModels[i]->toggleTransparency(keyboardEvent->isTransparent());
+			}
 		}
 	}
 

@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
 	double speed = 1.0;
 	bool debug = false;
 	int seed = -1;
-	for (; currentArg < argc; currentArg++) {
+	for (currentArg; currentArg < argc; currentArg++) {
 		if (std::string("--help").compare(argv[currentArg]) == 0) {
 			printUsage(argv);
 			printHelp();
@@ -429,7 +429,7 @@ int main(int argc, char *argv[]) {
 	// Robot decoding
 	// ---------------------------------------
 	unsigned int swarmSize = configuration->getSwarmSize();
-	std::vector<robogenMessage::Robot> robotMessage;
+	std::vector<robogenMessage::Robot> robotMessage(swarmSize);
 	for(int i=1;i<=swarmSize;i++){
 		std::string robotFileString(argv[i]);
 		
@@ -476,7 +476,7 @@ int main(int argc, char *argv[]) {
 	// ---------------------------------------
 	IViewer *viewer = NULL;
 	if (visualize) {
-		viewer = new Viewer(startPaused, debug, speed, recording, recordFrequency, recordDirectoryName);
+		viewer = new Viewer(startPaused, debug, speed, recording, recordFrequency, recordDirectoryName, swarmSize);
 	}
 
 	unsigned int simulationResult = runSimulations(scenario, configuration,

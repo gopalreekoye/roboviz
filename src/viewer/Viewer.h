@@ -60,7 +60,7 @@ public:
 	Viewer(bool startPaused, bool debugActive, double speedFactor);
 	Viewer(bool startPaused, bool debugActive, double speedFactor,
 			bool recording,
-			unsigned int recordFrequency, std::string recordDirectoryName);
+			unsigned int recordFrequency, std::string recordDirectoryName, unsigned int swarmSize);
 	~Viewer();
 	bool configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> bodyParts,
 			boost::shared_ptr<Scenario> scenario);
@@ -85,9 +85,10 @@ public:
 private:
 	void init(bool startPaused, bool debugActive, double speedFactor,
 			bool recording,
-			unsigned int recordFrequency, std::string recordDirectoryName);
+			unsigned int recordFrequency, std::string recordDirectoryName, unsigned int swarmSize);
 	void record();
 
+	unsigned int swarmSize;
 	osgViewer::Viewer *viewer;
 	osg::ref_ptr<osg::Camera> camera;
 	osg::ref_ptr<osg::Group> root;
@@ -105,7 +106,7 @@ private:
 
 	bool debugActive;
 
-	std::vector<boost::shared_ptr<RenderModel> > renderModels;
+	std::vector<std::vector<boost::shared_ptr<RenderModel>>> renderModels;
 
 };
 

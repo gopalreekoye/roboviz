@@ -179,9 +179,9 @@ int main(int argc, char* argv[]) {
 						viewer = new Viewer(startPaused);
 					}
 					unsigned int swarmSize=scenario->getRobogenConfig()->getSwarmSize();
-					unsigned int simulationResult = runSimulations(scenario,
-							configuration, packet.getMessage()->robot(),
-							viewer, rng, swarmSize);
+					unsigned int simulationResult = 1;//runSimulations(scenario,
+							//configuration, packet.getMessage()->robot(),
+							//viewer, rng, swarmSize);
 
 					if(viewer != NULL) {
 						delete viewer;

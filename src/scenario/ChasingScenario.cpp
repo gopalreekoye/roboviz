@@ -70,7 +70,7 @@ bool ChasingScenario::init(dWorldID odeWorld, dSpaceID odeSpace, std::vector<boo
 bool ChasingScenario::afterSimulationStep() {
 
 	// Compute distance from light source
-	osg::Vec3 curPos = this->getRobot(0)->getCoreComponent()->getRootPosition();
+	osg::Vec3 curPos = this->getRobot(1)->getCoreComponent()->getRootPosition();
 	osg::Vec3 lightSourcePos = this->getEnvironment()->getLightSources()[0]->getPosition();
 
 	osg::Vec3 temp = curPos - lightSourcePos;

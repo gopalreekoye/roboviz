@@ -67,7 +67,7 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 	std::vector<double> minZ(swarmSize, 0.0);
 	std::vector<double> maxZ(swarmSize, 0.0);
 	
-	std::vector<osg::Vec2> startingPosition;
+	std::vector<osg::Vec2> startingPosition(swarmSize);
 
 
 	// Starting position and orientation
