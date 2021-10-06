@@ -40,6 +40,7 @@ class BoxObstacleRender {
 public:
 
 	BoxObstacleRender(boost::shared_ptr<BoxObstacle> obstacle);
+	BoxObstacleRender(boost::shared_ptr<BoxObstacle> obstacle, osg::Vec4 color);
 
 	virtual ~BoxObstacleRender();
 

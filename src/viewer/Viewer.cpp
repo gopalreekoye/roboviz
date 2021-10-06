@@ -188,6 +188,24 @@ bool Viewer::configureScene(std::vector<std::vector<boost::shared_ptr<Model>>> b
 
 	std::cout << "Terrain rendering done"<<std::endl;
 
+	//Gathering Zone Rendering with cyan color
+	osg::Vec4 cyan = osg::Vec4(0,1,1,1);
+	boost::shared_ptr<BoxObstacle> gatheringZone = scenario->getEnvironment()->getGatheringZone();
+	boost::shared_ptr<BoxObstacleRender> zoneRender(
+				new BoxObstacleRender(gatheringZone, cyan));
+		this->root->addChild(zoneRender->getRootNode());
+
+	//Resources rendering with green color
+	osg::Vec4 green = osg::Vec4(0,1,0,1);
+	const std::vector<boost::shared_ptr<BoxObstacle> >& resources =
+			scenario->getEnvironment()->getResources();
+	for (unsigned int i = 0; i < resources.size(); ++i) {
+
+		boost::shared_ptr<BoxObstacleRender> resourceRender(
+				new BoxObstacleRender(resources[i], green));
+		this->root->addChild(resourceRender->getRootNode());
+	}
+
 	// Obstacles render model
 	const std::vector<boost::shared_ptr<Obstacle> >& obstacles =
 			scenario->getEnvironment()->getObstacles();

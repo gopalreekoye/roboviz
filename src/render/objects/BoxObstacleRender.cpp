@@ -51,6 +51,23 @@ BoxObstacleRender::BoxObstacleRender(boost::shared_ptr<BoxObstacle> obstacle) {
 	rootNode_->setUpdateCallback(new PositionObservableCallback(obstacle));
 
 }
+BoxObstacleRender::BoxObstacleRender(boost::shared_ptr<BoxObstacle> obstacle,osg::Vec4 color ) {
+
+	rootNode_ = new osg::PositionAttitudeTransform();
+
+	osg::ref_ptr<osg::Box> box(
+			new osg::Box(osg::Vec3(0, 0, 0), fromOde(obstacle->getSize().x()),
+					fromOde(obstacle->getSize().y()), fromOde(obstacle->getSize().z())));
+
+	osg::ref_ptr<osg::ShapeDrawable> boxDrawable(
+			new osg::ShapeDrawable(box.get()));
+	boxDrawable->setColor(color);
+	osg::ref_ptr<osg::Geode> geode(new osg::Geode());
+	geode->addDrawable(boxDrawable.get());
+	rootNode_->addChild(geode);
+	rootNode_->setUpdateCallback(new PositionObservableCallback(obstacle));
+
+}
 
 BoxObstacleRender::~BoxObstacleRender() {
 
