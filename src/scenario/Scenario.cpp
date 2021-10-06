@@ -56,7 +56,15 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 	if(!environment_->init()) {
 		return false;
 	}
-
+	osg::Vec3 gatheringZonePosition = robogenConfig_->getGatheringZonePosition();
+	osg::Vec3 gatheringZoneSize = robogenConfig_->getGatheringZoneSize();
+	osg::Vec3 rotAxis = osg::Vec3(0,0,0);
+	//gathering zone setup
+	boost::shared_ptr<BoxObstacle> gatheringZone(
+		new BoxObstacle(odeWorld, odeSpace,gatheringZonePosition,
+						gatheringZoneSize, 1.f,rotAxis,
+						0.f));
+	environment_->setGatheringZone(gatheringZone);
 
 	robots_ = robots;
 	unsigned int swarmSize= robogenConfig_->getSwarmSize();
@@ -189,15 +197,15 @@ bool Scenario::init(dWorldID odeWorld, dSpaceID odeSpace,
 
 
 	for (unsigned int i = 0; i < cr.size(); ++i) {
-		boost::shared_ptr<Resource> resource(
-									new Resource(odeWorld, odeSpace, cr[i],
-											sr[i], dr[i], rotationAxisr[i],
-											rotationAnglesr[i]));
+		boost::shared_ptr<BoxObstacle> resource(
+			new BoxObstacle(odeWorld, odeSpace, cr[i],
+					sr[i], dr[i], rotationAxisr[i],
+					rotationAnglesr[i]));
 		environment_->addResource(resource);
 
 	}
 
-	// Setup light sources
+	//Setup light sources
 	boost::shared_ptr<LightSourcesConfig> lightSourcesConfig =
 			robogenConfig_->getLightSourcesConfig();
 
@@ -261,6 +269,7 @@ void Scenario::setStartingPosition(int id) {
 boost::shared_ptr<Environment> Scenario::getEnvironment() {
 	return environment_;
 }
+
 
 
 }

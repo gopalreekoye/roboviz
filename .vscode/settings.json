@@ -86,7 +86,8 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "slist": "cpp"
+        "slist": "cpp",
+        "referenced": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

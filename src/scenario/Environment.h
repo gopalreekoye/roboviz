@@ -31,6 +31,7 @@
 
 #include "model/objects/LightSource.h"
 #include "model/objects/Obstacle.h"
+#include "model/objects/BoxObstacle.h"
 #include "model/objects/Resource.h"
 #include "Terrain.h"
 #include "config/RobogenConfig.h"
@@ -84,7 +85,7 @@ public:
 		obstacles_.push_back(obstacle);
 	}
 
-	void addResource(boost::shared_ptr<Resource> resource) {
+	void addResource(boost::shared_ptr<BoxObstacle> resource) {
 		resources_.push_back(resource);
 	}
 
@@ -94,6 +95,17 @@ public:
 
 	std::vector<boost::shared_ptr<Obstacle> > getObstacles() {
 		return obstacles_;
+	}
+
+	std::vector<boost::shared_ptr<BoxObstacle> > getResources() {
+		return resources_;
+	}
+
+	boost::shared_ptr<BoxObstacle> getGatheringZone() {
+		return gatheringZone_;
+	}
+	void setGatheringZone(boost::shared_ptr<BoxObstacle> zone) {
+		gatheringZone_ = zone;
 	}
 
 private:
@@ -142,7 +154,13 @@ private:
 	 * Resources in the environment
 	 */
 
-	std::vector<boost::shared_ptr<Resource> > resources_;
+	std::vector<boost::shared_ptr<BoxObstacle> > resources_;
+
+	/**
+	 * Gathering zone in the environment
+	 * 
+	 */
+	boost::shared_ptr<BoxObstacle> gatheringZone_;
 
 };
 

@@ -70,7 +70,9 @@ public:
 			osg::Vec3 gravity, bool disallowObstacleCollisions,
 			unsigned int obstacleOverlapPolicy,
 			unsigned int swarmSize,
-			boost::shared_ptr<ResourcesConfig> resources) :
+			boost::shared_ptr<ResourcesConfig> resources,
+			osg::Vec3 gatheringZonePosition,
+			osg::Vec3 gatheringZoneSize) :
 				scenario_(scenario), scenarioFile_(scenarioFile),
 				timeSteps_(timeSteps),
 				timeStepLength_(timeStepLength),
@@ -91,7 +93,9 @@ public:
 				disallowObstacleCollisions_(disallowObstacleCollisions),
 				obstacleOverlapPolicy_(obstacleOverlapPolicy),
 				swarmSize_(swarmSize),
-				resources_(resources) {
+				resources_(resources),
+				gatheringZonePosition_(gatheringZonePosition),
+				gatheringZoneSize_(gatheringZoneSize) {
 
 		simulationTime_ = timeSteps * timeStepLength;
 
@@ -260,6 +264,18 @@ public:
 	osg::Vec3 getGravity() {
 		return gravity_;
 	}
+	/**
+	 * @return gatheringZonePosition vector
+	 */
+	osg::Vec3 getGatheringZonePosition() {
+		return gatheringZonePosition_;
+	}
+	/**
+	 * @return gatheringZoneSize vector
+	 */
+	osg::Vec3 getGatheringZoneSize() {
+		return gatheringZoneSize_;
+	}
 
 	/**
 	 * return if should disallow obstacle collisions
@@ -420,6 +436,16 @@ private:
 	 * Gravity
 	 */
 	osg::Vec3 gravity_;
+
+	/**
+	 * center of gathering zone
+	 */
+	osg::Vec3 gatheringZonePosition_;
+
+	/**
+	 * Size of gathering zone in x length, y length, z length
+	 */
+	osg::Vec3 gatheringZoneSize_;
 
 	/**
 	 * flag to disallow obstacle collisions
