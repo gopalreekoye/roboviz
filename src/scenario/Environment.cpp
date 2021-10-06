@@ -44,6 +44,7 @@ Environment::~Environment() {
 	odeSpace_ = 0;
 	terrain_.reset();
 	obstacles_.clear();
+	resources_.clear();
 }
 
 bool Environment::init() {

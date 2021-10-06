@@ -84,6 +84,10 @@ public:
 		obstacles_.push_back(obstacle);
 	}
 
+	void addResource(boost::shared_ptr<Resource> resource) {
+		resources_.push_back(resource);
+	}
+
 	boost::shared_ptr<Terrain> getTerrain() {
 		return terrain_;
 	}
