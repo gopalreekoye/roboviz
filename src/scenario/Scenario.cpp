@@ -221,6 +221,9 @@ void Scenario::prune(){
 boost::shared_ptr<Robot> Scenario::getRobot(int id) {
 	return robots_[id];
 }
+boost::shared_ptr<Robot> Scenario::getRobot() {
+	return robots_[0];
+}
 
 boost::shared_ptr<RobogenConfig> Scenario::getRobogenConfig() {
 	return robogenConfig_;

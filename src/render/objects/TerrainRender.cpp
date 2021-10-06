@@ -49,12 +49,26 @@ TerrainRender::TerrainRender(boost::shared_ptr<Terrain> terrain) {
 				new osg::Box(osg::Vec3(0, 0, -2.5),
 						fromOde(terrain->getWidth()),
 						fromOde(terrain->getDepth()), 5));
+		
+		osg::ref_ptr<osg::Shape> zone(
+				new osg::Box(osg::Vec3(0, 0, -2.5),
+						fromOde(terrain->getWidth()/4),
+						fromOde(terrain->getDepth()/4), 5));
 
 		osg::ref_ptr<osg::ShapeDrawable> osgPlaneDrawable(
 				new osg::ShapeDrawable(shape.get()));
 
+		osg::ref_ptr<osg::ShapeDrawable> zoneDrawable(
+				new osg::ShapeDrawable(zone.get()));
+
+		// osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+    	// colors->push_back(osg::Vec4(0, 1.0, 0, 1.0)); // RGBA for green
+    	// zone->setColorArray(colors);
+    	// zone->setColorBinding(osg::Geometry::BIND_OVERALL);
+
 		osg::ref_ptr<osg::Geode> osgGroundGeode(new osg::Geode());
 		osgGroundGeode->addDrawable(osgPlaneDrawable.get());
+		osgGroundGeode->addDrawable(zoneDrawable.get());
 
 		rootNode_->addChild(osgGroundGeode);
 

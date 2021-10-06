@@ -35,6 +35,7 @@
 #include "config/StartPositionConfig.h"
 #include "config/TerrainConfig.h"
 #include "config/LightSourcesConfig.h"
+#include "config/ResourcesConfig.h"
 #include "robogen.pb.h"
 
 namespace robogen {
@@ -68,7 +69,8 @@ public:
 			float maxAngularAcceleration, int maxDirectionShiftsPerSecond,
 			osg::Vec3 gravity, bool disallowObstacleCollisions,
 			unsigned int obstacleOverlapPolicy,
-			unsigned int swarmSize) :
+			unsigned int swarmSize,
+			boost::shared_ptr<ResourcesConfig> resources) :
 				scenario_(scenario), scenarioFile_(scenarioFile),
 				timeSteps_(timeSteps),
 				timeStepLength_(timeStepLength),
@@ -88,7 +90,8 @@ public:
 				gravity_(gravity),
 				disallowObstacleCollisions_(disallowObstacleCollisions),
 				obstacleOverlapPolicy_(obstacleOverlapPolicy),
-				swarmSize_(swarmSize) {
+				swarmSize_(swarmSize),
+				resources_(resources) {
 
 		simulationTime_ = timeSteps * timeStepLength;
 
@@ -132,6 +135,13 @@ public:
 	 */
 	boost::shared_ptr<ObstaclesConfig> getObstaclesConfig() {
 		return obstacles_;
+	}
+
+	/**
+	 * @return the obstacles configuration
+	 */
+	boost::shared_ptr<ResourcesConfig> getResourcesConfig() {
+		return resources_;
 	}
 
 	/**
@@ -338,6 +348,11 @@ private:
 	 * Obstacles configuration
 	 */
 	boost::shared_ptr<ObstaclesConfig> obstacles_;
+
+	/**
+	 * Resources configuration
+	 */
+	boost::shared_ptr<ResourcesConfig> resources_;
 
 	/**
 	 * Obstacle configuration file location

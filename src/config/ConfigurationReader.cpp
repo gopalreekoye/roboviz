@@ -265,10 +265,10 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseConfigurationFile(
 	// Read obstacles configuration
 	boost::shared_ptr<ObstaclesConfig> obstacles;
 	std::string obstaclesConfigFile = "";
-	if (!vm.count("resourcesConfigFile")) {
+	if (!vm.count("obstaclesConfigFile")) {
 		obstacles.reset(new ObstaclesConfig());
 	} else {
-		obstaclesConfigFile = vm["resourcesConfigFile"].as<std::string>();
+		obstaclesConfigFile = vm["obstaclesConfigFile"].as<std::string>();
 
 		makeAbsolute(obstaclesConfigFile, filePath);
 
@@ -280,21 +280,21 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseConfigurationFile(
 	}
 
 	// Read resources configuration
-//		boost::shared_ptr<ResourcesConfig> resources;
-//		std::string resourcesConfigFile = "";
-//		if (!vm.count("resourcesConfigFile")) {
-//			resources.reset(new ResourcesConfig());
-//		} else {
-//			resourcesConfigFile = vm["resourcesConfigFile"].as<std::string>();
-//
-//			makeAbsolute(obstaclesConfigFile, filePath);
-//
-//			resources = parseResourcesFile(
-//					resourcesConfigFile);
-//			if (obstacles == NULL) {
-//				return boost::shared_ptr<RobogenConfig>();
-//			}
-//		}
+		boost::shared_ptr<ResourcesConfig> resources;
+		std::string resourcesConfigFile = "";
+		if (!vm.count("resourcesConfigFile")) {
+			resources.reset(new ResourcesConfig());
+		} else {
+			resourcesConfigFile = vm["resourcesConfigFile"].as<std::string>();
+
+			makeAbsolute(obstaclesConfigFile, filePath);
+
+			resources = parseResourcesFile(
+					resourcesConfigFile);
+			if (obstacles == NULL) {
+				return boost::shared_ptr<RobogenConfig>();
+			}
+		}
 
 	boost::shared_ptr<StartPositionConfig> startPositions;
 	std::string startPositionFile = "";
@@ -531,7 +531,7 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseConfigurationFile(
 					motorNoiseLevel, capAcceleration, maxLinearAcceleration,
 					maxAngularAcceleration, maxDirectionShiftsPerSecond,
 					gravity, disallowObstacleCollisions,
-					obstacleOverlapPolicy,swarmSize));
+					obstacleOverlapPolicy,swarmSize,resources));
 
 }
 
@@ -813,6 +813,7 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseRobogenMessage(
 	float timeStepLength = simulatorConf.timestep();
 	int actuationPeriod = simulatorConf.actuationperiod();
 	unsigned int swarmSize= 2;
+	boost::shared_ptr<ResourcesConfig> resources;
 
 	return boost::shared_ptr<RobogenConfig>(
 			new RobogenConfig(scenario, "", timeSteps, timeStepLength,
@@ -830,7 +831,7 @@ boost::shared_ptr<RobogenConfig> ConfigurationReader::parseRobogenMessage(
 							  simulatorConf.gravityz()),
 					simulatorConf.disallowobstaclecollisions(),
 					simulatorConf.obstacleoverlappolicy(),
-					swarmSize
+					swarmSize, resources
 					));
 
 }
@@ -854,7 +855,7 @@ boost::shared_ptr<ResourcesConfig> ConfigurationReader::parseResourcesFile(
 	std::vector<float> densities;
 	std::vector<osg::Vec3> rotationAxes;
 	std::vector<float> rotationAngles;
-	std::vector<int> numberOfRobots;
+	unsigned int numberOfRobots;
 
 	std::string line;
 	int lineNum = 0;
@@ -874,6 +875,7 @@ boost::shared_ptr<ResourcesConfig> ConfigurationReader::parseResourcesFile(
 			ySize = std::atof(match[5].str().c_str());
 			zSize = std::atof(match[6].str().c_str());
 			density = std::atof(match[7].str().c_str());
+			numberOfRobots = std::atof(match[8].str().c_str());
 		} else {
 			std::cerr << "Error parsing line " << lineNum <<
 					" of resources file: '" << fileName << "'"
@@ -890,6 +892,6 @@ boost::shared_ptr<ResourcesConfig> ConfigurationReader::parseResourcesFile(
 
 	return boost::shared_ptr<ResourcesConfig>(
 			new ResourcesConfig(coordinates, sizes, densities,
-					rotationAxes, rotationAngles));
+					rotationAxes, rotationAngles, numberOfRobots));
 }
 }

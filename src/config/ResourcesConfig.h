@@ -10,7 +10,7 @@ namespace robogen {
 /**
  * Resources configuration parameters
  */
-class ResourcesConfig : public ObstaclesConfig{
+class ResourcesConfig: ObstaclesConfig {
 
 public:
 
@@ -23,9 +23,9 @@ public:
 			const std::vector<osg::Vec3>& sizes,
 			const std::vector<float> &densities,
 			const std::vector<osg::Vec3>& rotationAxes,
-			const std::vector<float> &rotationAngles) :
+			const std::vector<float> &rotationAngles, unsigned int numberOfRobots) :
 			coordinates_(coordinates), sizes_(sizes), densities_(densities),
-			rotationAxes_(rotationAxes), rotationAngles_(rotationAngles) {
+			rotationAxes_(rotationAxes), rotationAngles_(rotationAngles), numberOfRobots_(numberOfRobots) {
 
 	}
 
@@ -69,6 +69,13 @@ public:
 	 */
 	const std::vector<float>& getRotationAngles() const{
 		return rotationAngles_;
+	}
+
+	/**
+	 * @return number of robots required to push resource
+	 */
+	const unsigned int getNumberOfRobots() const{
+		return numberOfRobots_;
 	}
 
 	/**
@@ -117,6 +124,12 @@ private:
 	 * Obstacle rotationAngles
 	 */
 	std::vector<float> rotationAngles_;
+
+	/**
+	 * number of robots required to push resource
+	 * 
+	 */
+	unsigned int numberOfRobots_;
 };
 
 }

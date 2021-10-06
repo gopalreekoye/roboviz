@@ -31,6 +31,7 @@
 
 #include "model/objects/LightSource.h"
 #include "model/objects/Obstacle.h"
+#include "model/objects/Resource.h"
 #include "Terrain.h"
 #include "config/RobogenConfig.h"
 
@@ -132,6 +133,12 @@ private:
 	 */
 
 	std::vector<boost::shared_ptr<Obstacle> > obstacles_;
+
+	/**
+	 * Resources in the environment
+	 */
+
+	std::vector<boost::shared_ptr<Resource> > resources_;
 
 };
 

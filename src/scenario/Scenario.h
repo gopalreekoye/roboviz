@@ -84,6 +84,7 @@ public:
 	 * @return the robot
 	 */
 	boost::shared_ptr<Robot> getRobot(int id);
+	boost::shared_ptr<Robot> getRobot();
 
 	/**
 	 * @return the vector of robots
